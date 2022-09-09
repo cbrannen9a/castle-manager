@@ -19,11 +19,20 @@ invariant(
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-export async function createUser(email: string, password: string) {
-  const { user } = await supabase.auth.signUp({
-    email,
-    password,
-  });
+export async function createUser({
+  email,
+  password,
+}: {
+  email: string;
+  password?: string | null;
+}) {
+  const authItem: AuthItem = { email };
+  if (password) {
+    console.log(password);
+    authItem["password"] = password;
+  }
+
+  const { user } = await supabase.auth.signUp(authItem);
 
   // get the user profile after created
   const profile = await getProfileByEmail(user?.email);
@@ -53,14 +62,26 @@ export async function getProfileByEmail(email?: string) {
   if (data) return data;
 }
 
-export async function verifyLogin(email: string, password: string) {
-  const { user, error } = await supabase.auth.signIn({
-    email,
-    password,
-  });
+export async function verifyLogin({
+  email,
+  password,
+}: {
+  email: string;
+  password?: string | null;
+}) {
+  const authItem: AuthItem = { email };
+  if (password) {
+    authItem["password"] = password;
+  }
+  const { user, error } = await supabase.auth.signIn(authItem);
 
   if (error) return undefined;
   const profile = await getProfileByEmail(user?.email);
 
   return profile;
 }
+
+type AuthItem = {
+  email: string;
+  password?: string;
+};

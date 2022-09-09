@@ -44,7 +44,7 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   // What if a user sends us a password through other means than our form?
-  if (typeof password !== "string") {
+  if (password && typeof password !== "string") {
     return json(
       { errors: { password: "Valid password is required." } },
       { status: 400 }
@@ -52,7 +52,7 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   // Enforce minimum password length
-  if (password.length < 6) {
+  if (password && password.length < 6) {
     return json<ActionData>(
       { errors: { password: "Password is too short." } },
       { status: 400 }
@@ -69,7 +69,7 @@ export const action: ActionFunction = async ({ request }) => {
     );
   }
 
-  const user = await createUser(email, password);
+  const user = await createUser({ email, password });
 
   return createUserSession({
     request,

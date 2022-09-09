@@ -39,22 +39,22 @@ export const action: ActionFunction = async ({ request }) => {
   if (!validateEmail(email)) {
     return json({ errors: { email: "Email is invalid." } }, { status: 400 });
   }
-
-  if (typeof password !== "string") {
+  console.log(password);
+  if (password && typeof password !== "string") {
     return json(
       { errors: { password: "Valid password is required." } },
       { status: 400 }
     );
   }
 
-  if (password.length < 6) {
+  if (password && password.length < 6) {
     return json(
       { errors: { password: "Password is too short" } },
       { status: 400 }
     );
   }
 
-  const user = await verifyLogin(email, password);
+  const user = await verifyLogin({ email, password });
 
   if (!user) {
     return json(
