@@ -15,11 +15,9 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   const game = await createGame({ title, userId });
-  if (!game) {
-    throw new Error("Unable to make game");
-  }
-
-  return redirect(`/games/${game._id}`);
+  console.log(game);
+  return null;
+  // return redirect(`/games/${game.id}`);
 };
 
 export default function NewGamePage() {
