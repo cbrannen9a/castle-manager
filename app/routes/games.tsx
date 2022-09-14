@@ -7,13 +7,13 @@ import { requireUserId } from "~/session.server";
 import { useUser } from "~/utils";
 
 type LoaderData = {
-  noteListItems: Game[];
+  gameListItems: Game[];
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
   const userId = await requireUserId(request);
-  const noteListItems = await getGameListItems({ userId });
-  return json({ noteListItems });
+  const gameListItems = await getGameListItems({ userId });
+  return json({ gameListItems });
 };
 
 export default function GamesPage() {
@@ -30,19 +30,19 @@ export default function GamesPage() {
 
           <hr />
 
-          {data.noteListItems.length === 0 ? (
+          {data.gameListItems.length === 0 ? (
             <p className="p-4">No Games yet</p>
           ) : (
             <ol>
-              {data.noteListItems.map((note) => (
-                <li key={note._id}>
+              {data.gameListItems.map((game) => (
+                <li key={game._id}>
                   <NavLink
                     className={({ isActive }) =>
                       `block border-b p-4 text-xl ${isActive ? "bg-white" : ""}`
                     }
-                    to={note._id}
+                    to={game._id}
                   >
-                    📝 {note.title}
+                    📝 {game.title}
                   </NavLink>
                 </li>
               ))}
