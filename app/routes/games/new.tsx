@@ -1,20 +1,36 @@
 import type { ActionFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { Form } from "@remix-run/react";
+import { Form, useActionData } from "@remix-run/react";
+import { useEffect, useRef, useState } from "react";
 import { createGame } from "~/models/game.server";
 import { requireUserId } from "~/session.server";
+
+interface ActionData {
+  errors: {
+    title?: string;
+    maxPlayers?: string;
+  };
+}
 
 export const action: ActionFunction = async ({ request }) => {
   const userId = await requireUserId(request);
 
   const formData = await request.formData();
   const title = formData.get("title");
+  const maxPlayers = parseInt(formData.get("maxPlayers") as string);
 
   if (typeof title !== "string" || title.length === 0) {
     return json({ errors: { title: "Title is required" } }, { status: 400 });
   }
 
-  const game = await createGame({ title, userId });
+  if (typeof maxPlayers !== "number" || maxPlayers < 1 || maxPlayers > 8) {
+    return json(
+      { errors: { maxPlayers: "Max Players is between 1 and 8" } },
+      { status: 400 }
+    );
+  }
+
+  const game = await createGame({ title, maxPlayers, userId });
   if (!game) {
     throw new Error("Unable to create game");
   }
@@ -22,6 +38,21 @@ export const action: ActionFunction = async ({ request }) => {
 };
 
 export default function NewGamePage() {
+  const [maxPlayers, setMaxPlayers] = useState<number>(8);
+  const actionData = useActionData() as ActionData;
+  const titleRef = useRef<HTMLInputElement>(null);
+  const maxPlayersRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (actionData?.errors?.title) {
+      titleRef?.current?.focus();
+    }
+
+    if (actionData?.errors?.maxPlayers) {
+      maxPlayersRef?.current?.focus();
+    }
+  }, [actionData]);
+
   return (
     <Form
       method="post"
@@ -38,7 +69,31 @@ export default function NewGamePage() {
           <input
             name="title"
             className="flex-1 rounded-md border-2 border-blue-500 px-3 text-lg leading-loose"
+            ref={titleRef}
           />
+          {actionData?.errors?.title && (
+            <span className="block pt-1 text-red-700" id="email-error">
+              {actionData?.errors?.title}
+            </span>
+          )}
+        </label>
+      </div>
+      <div>
+        <label className="flex w-full flex-col gap-1">
+          <span>Max Players: </span>
+          <input
+            name="maxPlayers"
+            type="number"
+            value={maxPlayers}
+            onChange={(e) => setMaxPlayers(parseInt(e.target.value))}
+            className="flex-1 rounded-md border-2 border-blue-500 px-3 text-lg leading-loose"
+            ref={maxPlayersRef}
+          />
+          {actionData?.errors?.maxPlayers && (
+            <span className="block pt-1 text-red-700" id="email-error">
+              {actionData?.errors?.maxPlayers}
+            </span>
+          )}
         </label>
       </div>
 

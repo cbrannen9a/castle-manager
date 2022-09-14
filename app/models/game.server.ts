@@ -30,12 +30,15 @@ export async function getGameListItems({ userId }: { userId: User["id"] }) {
 export async function createGame({
   title,
   userId,
-}: Pick<Game, "title"> & { userId: User["id"] }) {
+  maxPlayers,
+}: Pick<Game, "title" | "maxPlayers"> & { userId: User["id"] }) {
   try {
     const data = await client.create({
       _type: "game",
       title,
       host: userId,
+      maxPlayers,
+      status: "pending",
     });
     if (!isGame(data)) {
       throw new Error("Invalid game data");
@@ -51,6 +54,10 @@ export async function deleteGame({
   userId,
 }: Pick<Game, "_id"> & { userId: User["id"] }) {
   try {
+    const game = await getGame({ _id, userId });
+    if (!game) {
+      throw new Error("Unable to delete game");
+    }
     await client.delete(_id);
     return {};
   } catch (error) {

@@ -1,20 +1,29 @@
-import type { LoaderFunction } from "@remix-run/node";
+import { type LoaderFunction, redirect } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { Form, Link, NavLink, Outlet, useLoaderData } from "@remix-run/react";
-import { type Game, getGameListItems } from "~/models/game.server";
+import { Form, Link, Outlet, useLoaderData } from "@remix-run/react";
+
+import { type Game, getGame } from "~/models/game.server";
 
 import { requireUserId } from "~/session.server";
-import { useUser } from "~/utils";
 
 type LoaderData = {
-  noteListItems: Game[];
+  game: Game;
 };
 
-// export const loader: LoaderFunction = async ({ request }) => {
-//   const userId = await requireUserId(request);
-//   const noteListItems = await getGameListItems({ userId });
-//   return json({ noteListItems });
-// };
+export const loader: LoaderFunction = async ({ request, params }) => {
+  if (!params.gameId) {
+    return redirect("/games");
+  }
+
+  const userId = await requireUserId(request);
+
+  const game = await getGame({ userId, _id: params.gameId });
+  if (!game) {
+    throw new Response("Not Found", { status: 404 });
+  }
+
+  return json({ game });
+};
 
 export default function GamePage() {
   return (
@@ -30,13 +39,13 @@ export default function GamePage() {
 }
 
 function Header() {
-  const user = useUser();
+  const { game } = useLoaderData() as LoaderData;
+
   return (
-    <header className="flex items-center justify-between bg-slate-800 p-4 text-white">
+    <header className="flex w-full items-center justify-between bg-slate-800 p-4 text-white">
       <h1 className="text-3xl font-bold">
-        <Link to=".">Game</Link>
+        <Link to={`/game/${game._id}`}>{game.title}</Link>
       </h1>
-      <p>{user.email}</p>
       <Form action="/logout" method="post">
         <button
           type="submit"
