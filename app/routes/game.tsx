@@ -1,16 +1,12 @@
-import { type LoaderFunction, redirect } from "@remix-run/node";
+import { redirect, type LoaderArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Form, Link, Outlet, useLoaderData } from "@remix-run/react";
 
-import { type Game, getGame } from "~/models/game.server";
+import { getGame } from "~/models/game.server";
 
 import { requireUserId } from "~/session.server";
 
-type LoaderData = {
-  game: Game;
-};
-
-export const loader: LoaderFunction = async ({ request, params }) => {
+export async function loader({ request, params }: LoaderArgs) {
   if (!params.gameId) {
     return redirect("/games");
   }
@@ -23,7 +19,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   }
 
   return json({ game });
-};
+}
 
 export default function GamePage() {
   return (
@@ -39,8 +35,7 @@ export default function GamePage() {
 }
 
 function Header() {
-  const { game } = useLoaderData() as LoaderData;
-
+  const { game } = useLoaderData<typeof loader>();
   return (
     <header className="flex w-full items-center justify-between bg-slate-800 p-4 text-white">
       <h1 className="text-3xl font-bold">

@@ -1,9 +1,5 @@
 import React from "react";
-import type {
-  ActionFunction,
-  LoaderFunction,
-  MetaFunction,
-} from "@remix-run/node";
+import type { ActionArgs, LoaderArgs, MetaFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { Form, Link, useActionData, useSearchParams } from "@remix-run/react";
 import { verifyLogin } from "~/models/user.server";
@@ -16,20 +12,13 @@ export const meta: MetaFunction = () => {
   };
 };
 
-interface ActionData {
-  errors: {
-    email?: string;
-    password?: string;
-  };
-}
-
-export const loader: LoaderFunction = async ({ request }) => {
+export async function loader({ request }: LoaderArgs) {
   const userId = await getUserId(request);
   if (userId) return redirect("/");
   return json({});
-};
+}
 
-export const action: ActionFunction = async ({ request }) => {
+export async function action({ request }: ActionArgs) {
   const formData = await request.formData();
   const email = formData.get("email");
   const password = formData.get("password");
@@ -37,19 +26,22 @@ export const action: ActionFunction = async ({ request }) => {
   const remember = formData.get("remember");
 
   if (!validateEmail(email)) {
-    return json({ errors: { email: "Email is invalid." } }, { status: 400 });
+    return json(
+      { errors: { email: "Email is invalid.", password: null } },
+      { status: 400 }
+    );
   }
 
   if (typeof password !== "string") {
     return json(
-      { errors: { password: "Valid password is required." } },
+      { errors: { password: "Valid password is required.", email: null } },
       { status: 400 }
     );
   }
 
   if (password.length < 6) {
     return json(
-      { errors: { password: "Password is too short" } },
+      { errors: { password: "Password is too short", email: null } },
       { status: 400 }
     );
   }
@@ -58,7 +50,7 @@ export const action: ActionFunction = async ({ request }) => {
 
   if (!user) {
     return json(
-      { errors: { email: "Invalid email or password" } },
+      { errors: { email: "Invalid email or password", password: null } },
       { status: 400 }
     );
   }
@@ -69,13 +61,13 @@ export const action: ActionFunction = async ({ request }) => {
     remember: remember === "on" ? true : false,
     redirectTo: typeof redirectTo === "string" ? redirectTo : "/games",
   });
-};
+}
 
 export default function Login() {
   const [searchParams] = useSearchParams();
   const redirectTo = searchParams.get("redirectTo") ?? "/games";
 
-  const actionData = useActionData() as ActionData;
+  const actionData = useActionData<typeof action>();
   const emailRef = React.useRef<HTMLInputElement>(null);
   const passwordRef = React.useRef<HTMLInputElement>(null);
 

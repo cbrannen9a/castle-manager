@@ -1,10 +1,9 @@
-import { json, redirect, type LoaderFunction } from "@remix-run/node";
-import { Link } from "@remix-run/react";
+import { json, redirect, type LoaderArgs } from "@remix-run/node";
 import invariant from "tiny-invariant";
 import { getGame } from "~/models/game.server";
 import { requireUserId } from "~/session.server";
 
-export const loader: LoaderFunction = async ({ request, params }) => {
+export async function loader({ request, params }: LoaderArgs) {
   const userId = await requireUserId(request);
   invariant(params.gameId, "gameId not found");
 
@@ -17,7 +16,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   }
 
   return json({ game });
-};
+}
 
 export default function GameIndexPage() {
   return <p>InProgress Game</p>;

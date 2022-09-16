@@ -1,8 +1,4 @@
-import type {
-  ActionFunction,
-  LoaderFunction,
-  MetaFunction,
-} from "@remix-run/node";
+import type { ActionArgs, LoaderArgs, MetaFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { Form, Link, useActionData, useSearchParams } from "@remix-run/react";
 import { createUserSession, getUserId } from "~/session.server";
@@ -16,20 +12,13 @@ export const meta: MetaFunction = () => {
   };
 };
 
-interface ActionData {
-  errors: {
-    email?: string;
-    password?: string;
-  };
-}
-
-export const loader: LoaderFunction = async ({ request }) => {
+export async function loader({ request }: LoaderArgs) {
   const userId = await getUserId(request);
   if (userId) return redirect("/");
   return json({});
-};
+}
 
-export const action: ActionFunction = async ({ request }) => {
+export async function action({ request }: ActionArgs) {
   const formData = await request.formData();
   const email = formData.get("email");
   const password = formData.get("password");
@@ -37,8 +26,8 @@ export const action: ActionFunction = async ({ request }) => {
 
   // Ensure the email is valid
   if (!validateEmail(email)) {
-    return json<ActionData>(
-      { errors: { email: "Email is invalid." } },
+    return json(
+      { errors: { email: "Email is invalid.", password: null } },
       { status: 400 }
     );
   }
@@ -46,15 +35,15 @@ export const action: ActionFunction = async ({ request }) => {
   // What if a user sends us a password through other means than our form?
   if (typeof password !== "string") {
     return json(
-      { errors: { password: "Valid password is required." } },
+      { errors: { password: "Valid password is required.", email: null } },
       { status: 400 }
     );
   }
 
   // Enforce minimum password length
   if (password.length < 6) {
-    return json<ActionData>(
-      { errors: { password: "Password is too short." } },
+    return json(
+      { errors: { password: "Password is too short.", email: null } },
       { status: 400 }
     );
   }
@@ -63,8 +52,13 @@ export const action: ActionFunction = async ({ request }) => {
   // and we should communicate that well
   const existingUser = await getProfileByEmail(email);
   if (existingUser) {
-    return json<ActionData>(
-      { errors: { email: "A user already exists with this email." } },
+    return json(
+      {
+        errors: {
+          email: "A user already exists with this email.",
+          password: null,
+        },
+      },
       { status: 400 }
     );
   }
@@ -77,13 +71,13 @@ export const action: ActionFunction = async ({ request }) => {
     remember: false,
     redirectTo: typeof redirectTo === "string" ? redirectTo : "/",
   });
-};
+}
 
 export default function Join() {
   const [searchParams] = useSearchParams();
   const redirectTo = searchParams.get("redirectTo") ?? undefined;
 
-  const actionData = useActionData() as ActionData;
+  const actionData = useActionData<typeof action>();
   const emailRef = React.useRef<HTMLInputElement>(null);
   const passwordRef = React.useRef<HTMLInputElement>(null);
 

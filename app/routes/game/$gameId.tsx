@@ -1,15 +1,15 @@
 import {
-  type ActionFunction,
   json,
   redirect,
-  type LoaderFunction,
+  type LoaderArgs,
+  type ActionArgs,
 } from "@remix-run/node";
-import { Form, Link, useLoaderData } from "@remix-run/react";
+import { Form, useLoaderData } from "@remix-run/react";
 import invariant from "tiny-invariant";
 import { getGame, startGame } from "~/models/game.server";
 import { requireUserId } from "~/session.server";
 
-export const loader: LoaderFunction = async ({ request, params }) => {
+export async function loader({ request, params }: LoaderArgs) {
   const userId = await requireUserId(request);
   invariant(params.gameId, "gameId not found");
 
@@ -19,9 +19,9 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   }
 
   return json({ game });
-};
+}
 
-export const action: ActionFunction = async ({ request, params }) => {
+export async function action({ request, params }: ActionArgs) {
   const userId = await requireUserId(request);
   const formData = await request.formData();
   const intent = formData.get("intent");
@@ -36,7 +36,7 @@ export const action: ActionFunction = async ({ request, params }) => {
     return redirect(`/game/${params.gameId}/inProgress`);
   }
   return redirect(`/game/${params.gameId}/error`);
-};
+}
 
 export default function GameDetailsPage() {
   const {

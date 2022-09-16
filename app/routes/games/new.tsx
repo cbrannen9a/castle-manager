@@ -1,18 +1,11 @@
-import type { ActionFunction } from "@remix-run/node";
+import type { ActionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { Form, useActionData } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 import { createGame } from "~/models/game.server";
 import { requireUserId } from "~/session.server";
 
-interface ActionData {
-  errors: {
-    title?: string;
-    maxPlayers?: string;
-  };
-}
-
-export const action: ActionFunction = async ({ request }) => {
+export async function action({ request }: ActionArgs) {
   const userId = await requireUserId(request);
 
   const formData = await request.formData();
@@ -20,12 +13,15 @@ export const action: ActionFunction = async ({ request }) => {
   const maxPlayers = parseInt(formData.get("maxPlayers") as string);
 
   if (typeof title !== "string" || title.length === 0) {
-    return json({ errors: { title: "Title is required" } }, { status: 400 });
+    return json(
+      { errors: { title: "Title is required", maxPlayers: null } },
+      { status: 400 }
+    );
   }
 
   if (typeof maxPlayers !== "number" || maxPlayers < 1 || maxPlayers > 8) {
     return json(
-      { errors: { maxPlayers: "Max Players is between 1 and 8" } },
+      { errors: { title: null, maxPlayers: "Max Players is between 1 and 8" } },
       { status: 400 }
     );
   }
@@ -35,11 +31,11 @@ export const action: ActionFunction = async ({ request }) => {
     throw new Error("Unable to create game");
   }
   return redirect(`/games/${game._id}`);
-};
+}
 
 export default function NewGamePage() {
   const [maxPlayers, setMaxPlayers] = useState<number>(8);
-  const actionData = useActionData() as ActionData;
+  const actionData = useActionData<typeof action>();
   const titleRef = useRef<HTMLInputElement>(null);
   const maxPlayersRef = useRef<HTMLInputElement>(null);
 
