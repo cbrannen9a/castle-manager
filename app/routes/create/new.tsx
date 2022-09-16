@@ -30,7 +30,7 @@ export async function action({ request }: ActionArgs) {
   if (!game) {
     throw new Error("Unable to create game");
   }
-  return redirect(`/games/${game._id}`);
+  return redirect(`${game._id}`);
 }
 
 export default function NewGamePage() {
