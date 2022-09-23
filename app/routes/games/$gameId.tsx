@@ -1,28 +1,33 @@
-import type { ActionArgs, LoaderArgs } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
-import { Form, Link, useLoaderData } from "@remix-run/react";
-import { requireUserId } from "~/session.server";
+import type { LoaderArgs } from "@remix-run/node";
+import { json } from "@remix-run/node";
+import { Link, useLoaderData } from "@remix-run/react";
 import invariant from "tiny-invariant";
-import { getGame, getGameQuery } from "~/models/game.server";
-import { PlayerCount } from "~/components";
+import { Game, getGame, getGameQuery } from "~/models/game.server";
+import { PlayerCount, PlayerId } from "~/components";
 import { useSubscription } from "~/lib/sanity";
+import { getProfilesByIds } from "~/models/user.server";
 
 export async function loader({ request, params }: LoaderArgs) {
   invariant(params.gameId, "gameId not found");
 
   const game = await getGame({ _id: params.gameId });
-
+  if (!game) {
+    return new Response("Not Found");
+  }
   const { query, queryParams } = getGameQuery({
     _id: params.gameId,
   });
 
-  return json({ game, query, queryParams });
+  const playerData = await getProfilesByIds(game.players);
+
+  return json({ game, query, queryParams, playerData });
 }
 
 export default function GameDetailsPage() {
-  const { game, query, queryParams } = useLoaderData<typeof loader>();
+  const { game, query, queryParams, playerData } =
+    useLoaderData<typeof loader>();
 
-  const { data } = useSubscription({
+  const { data } = useSubscription<Game>({
     query,
     queryParams,
     initialData: game,
@@ -41,7 +46,9 @@ export default function GameDetailsPage() {
       <PlayerCount current={players?.length} max={maxPlayers} />
       <ul>
         {players?.map((player) => (
-          <li key={player}>{player}</li>
+          <li key={player}>
+            <PlayerId player={playerData[player]} />
+          </li>
         ))}
       </ul>
       <Link

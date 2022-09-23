@@ -41,6 +41,24 @@ export async function getProfileById(id: string) {
   if (data) return { id: data.id, email: data.email };
 }
 
+export async function getProfilesByIds(ids?: string[]) {
+  if (!ids) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from<User>("profiles")
+    .select("email, id")
+    .in("id", ids);
+
+  if (error) return null;
+  if (data)
+    return data.reduce(
+      (a, v) => ({ ...a, [v.id]: v }),
+      {} as Record<string, User>
+    );
+}
+
 export async function getProfileByEmail(email?: string) {
   const { data, error } = await supabase
     .from("profiles")

@@ -1,8 +1,10 @@
+import { useOutletContext } from "@remix-run/react";
 import sanityClient from "@sanity/client";
 import { useMemo } from "react";
 
 export default function useSanityClient() {
-  //   const { sanityDataset, sanityProjectId } = useSanityContext();
+  const data = useOutletContext();
+  console.log(data);
   const client = useMemo(
     () =>
       new sanityClient({
