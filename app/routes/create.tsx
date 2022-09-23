@@ -2,13 +2,16 @@ import { json, type LoaderArgs } from "@remix-run/node";
 import { Link, NavLink, Outlet, useLoaderData } from "@remix-run/react";
 import { Header } from "~/components";
 import { useSubscriptionToList } from "~/lib/sanity";
-import { getGameListItems, getGameListItemsQuery } from "~/models/game.server";
+import {
+  getGameListItemsAsHost,
+  getGameListItemsAsHostQuery,
+} from "~/models/game.server";
 import { requireUserId } from "~/session.server";
 
 export async function loader({ request }: LoaderArgs) {
   const userId = await requireUserId(request);
-  const gameListItems = await getGameListItems({ userId });
-  const { query, queryParams } = getGameListItemsQuery({ userId });
+  const gameListItems = await getGameListItemsAsHost({ userId });
+  const { query, queryParams } = getGameListItemsAsHostQuery({ userId });
 
   return json({ gameListItems, userId, query, queryParams });
 }
@@ -32,31 +35,33 @@ export default function GamesPage() {
       <JoinOrCreate />
       <main className="flex h-full bg-white">
         <div className="h-full w-80 border-r bg-gray-50">
+          <h2 className="block bg-slate-400 p-4 text-xl text-white">
+            Hosted Games
+          </h2>
+          <hr />
+          <Link to="new" className="block p-4 text-xl text-blue-500">
+            + New Game
+          </Link>
+
+          <hr />
+
           {!data || data?.length === 0 ? (
             <p className="p-4">No Games yet</p>
           ) : (
-            <>
-              <h2 className="block bg-slate-400 p-4 text-xl text-white">
-                Available Games
-              </h2>
-              <hr />
-              <ol>
-                {data.map((game) => (
-                  <li key={game._id}>
-                    <NavLink
-                      className={({ isActive }) =>
-                        `block border-b p-4 text-xl ${
-                          isActive ? "bg-white" : ""
-                        }`
-                      }
-                      to={game._id}
-                    >
-                      📝 {game.title}
-                    </NavLink>
-                  </li>
-                ))}
-              </ol>
-            </>
+            <ol>
+              {data.map((game) => (
+                <li key={game._id}>
+                  <NavLink
+                    className={({ isActive }) =>
+                      `block border-b p-4 text-xl ${isActive ? "bg-white" : ""}`
+                    }
+                    to={game._id}
+                  >
+                    📝 {game.title}
+                  </NavLink>
+                </li>
+              ))}
+            </ol>
           )}
         </div>
 

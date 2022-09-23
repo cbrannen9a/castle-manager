@@ -3,25 +3,41 @@ import { json, redirect } from "@remix-run/node";
 import { Form, Link, useLoaderData } from "@remix-run/react";
 import { requireUserId } from "~/session.server";
 import invariant from "tiny-invariant";
-import { getGame, getGameQuery } from "~/models/game.server";
+import {
+  deleteGame,
+  getGameAsHost,
+  getGameAsHostQuery,
+} from "~/models/game.server";
 import { PlayerCount } from "~/components";
 import { useSubscription } from "~/lib/sanity";
 
 export async function loader({ request, params }: LoaderArgs) {
+  const userId = await requireUserId(request);
   invariant(params.gameId, "gameId not found");
 
-  const game = await getGame({ _id: params.gameId });
-
-  const { query, queryParams } = getGameQuery({
+  const game = await getGameAsHost({ userId, _id: params.gameId });
+  if (!game) {
+    throw new Response("Not Found", { status: 404 });
+  }
+  const { query, queryParams } = getGameAsHostQuery({
+    userId,
     _id: params.gameId,
   });
 
   return json({ game, query, queryParams });
 }
 
+export async function action({ request, params }: ActionArgs) {
+  const userId = await requireUserId(request);
+  invariant(params.gameId, "gameId not found");
+
+  await deleteGame({ userId, _id: params.gameId });
+
+  return redirect("/games");
+}
+
 export default function GameDetailsPage() {
   const { game, query, queryParams } = useLoaderData<typeof loader>();
-
   const { data } = useSubscription({
     query,
     queryParams,
@@ -29,9 +45,8 @@ export default function GameDetailsPage() {
   });
 
   if (!data) {
-    return <>No Game</>;
+    return <div>No game</div>;
   }
-
   const { _id, title, players, maxPlayers, status } = data;
   return (
     <div>
@@ -50,6 +65,15 @@ export default function GameDetailsPage() {
       >
         Join
       </Link>
+
+      <Form method="post">
+        <button
+          type="submit"
+          className="rounded bg-blue-500  py-2 px-4 text-white hover:bg-blue-600 focus:bg-blue-400"
+        >
+          Delete
+        </button>
+      </Form>
     </div>
   );
 }

@@ -3,6 +3,7 @@ import type { User } from "./user.server";
 
 export type Game = {
   _id: string;
+  _rev: string;
   title: string;
   players?: string[];
   host: string;
@@ -16,13 +17,26 @@ function isGame(uncertain: unknown): uncertain is Game {
   return (uncertain as Game)._id !== null;
 }
 
-export async function getGameListItems({ userId }: { userId: User["id"] }) {
-  const data: Game[] = await client.fetch(
-    `*[_type == 'game' && host == $userId ]{...}`,
-    {
+export function getGameListItemsAsHostQuery({
+  userId,
+}: {
+  userId: User["id"];
+}) {
+  return {
+    query: `*[_type == 'game' && host == $userId ]{...}`,
+    queryParams: {
       userId,
-    }
-  );
+    },
+  };
+}
+
+export async function getGameListItemsAsHost({
+  userId,
+}: {
+  userId: User["id"];
+}) {
+  const { query, queryParams } = getGameListItemsAsHostQuery({ userId });
+  const data: Game[] = await client.fetch(query, queryParams);
 
   return data;
 }
@@ -54,7 +68,7 @@ export async function deleteGame({
   userId,
 }: Pick<Game, "_id"> & { userId: User["id"] }) {
   try {
-    const game = await getGame({ _id, userId });
+    const game = await getGameAsHost({ _id, userId });
     if (!game) {
       throw new Error("Unable to delete game");
     }
@@ -77,19 +91,78 @@ export async function startGame({
   }
 }
 
-export async function getGame({
+export function getGameAsHostQuery({
+  _id,
+  userId,
+}: Pick<Game, "_id"> & { userId: User["id"] }) {
+  return {
+    query: `*[_type == 'game' && host == $userId && _id == $_id][0]{...}`,
+    queryParams: {
+      _id,
+      userId,
+    },
+  };
+}
+
+export async function getGameAsHost({
+  _id,
+  userId,
+}: Pick<Game, "_id"> & { userId: User["id"] }) {
+  const { query, queryParams } = getGameAsHostQuery({ _id, userId });
+  try {
+    const data: Game = await client.fetch(query, queryParams);
+    return data;
+  } catch (error) {
+    return null;
+  }
+}
+
+export function getGameListItemsQuery({ userId }: { userId: User["id"] }) {
+  return {
+    query: `*[_type == 'game' && $userId in players]{...}`,
+    queryParams: {
+      userId,
+    },
+  };
+}
+
+export async function getGameListItems({ userId }: { userId: User["id"] }) {
+  const { query, queryParams } = getGameListItemsQuery({ userId });
+  const data: Game[] = await client.fetch(query, queryParams);
+
+  return data;
+}
+
+export function getGameQuery({ _id }: Pick<Game, "_id">) {
+  return {
+    query: `*[_type == 'game' && _id == $_id][0]{...}`,
+    queryParams: {
+      _id,
+    },
+  };
+}
+
+export async function getGame({ _id }: Pick<Game, "_id">) {
+  const { query, queryParams } = getGameQuery({ _id });
+  try {
+    const data: Game = await client.fetch(query, queryParams);
+    return data;
+  } catch (error) {
+    return null;
+  }
+}
+
+export async function joinGameAsPlayer({
   _id,
   userId,
 }: Pick<Game, "_id"> & { userId: User["id"] }) {
   try {
-    const data: Game = await client.fetch(
-      `*[_type == 'game' && host == $userId && _id == $_id][0]{...}`,
-      {
-        _id,
-        userId,
-      }
-    );
-    return data;
+    await client
+      .patch(_id)
+      .setIfMissing({ players: [] })
+      .insert("after", "players[-1]", [userId])
+      .commit();
+    return {};
   } catch (error) {
     return null;
   }
