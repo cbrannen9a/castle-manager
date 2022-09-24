@@ -1,5 +1,10 @@
-import { ActionArgs, json, redirect, type LoaderArgs } from "@remix-run/node";
-import { Form, Link } from "@remix-run/react";
+import {
+  type ActionArgs,
+  json,
+  redirect,
+  type LoaderArgs,
+} from "@remix-run/node";
+import { Form } from "@remix-run/react";
 import invariant from "tiny-invariant";
 import { getGame, joinGameAsPlayer } from "~/models/game.server";
 import { requireUserId } from "~/session.server";

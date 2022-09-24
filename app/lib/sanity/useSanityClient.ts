@@ -1,17 +1,19 @@
 import sanityClient from "@sanity/client";
 import { useMemo } from "react";
+import { useSanityContext } from "~/contexts";
 
 export default function useSanityClient() {
-  //   const { sanityDataset, sanityProjectId } = useSanityContext();
+  const { apiVersion, dataset, projectId, useCdn } = useSanityContext();
+
   const client = useMemo(
     () =>
       new sanityClient({
-        apiVersion: "2021-03-25",
-        dataset: "production",
-        projectId: `ay6hp67o`,
-        useCdn: false,
+        apiVersion,
+        dataset,
+        projectId,
+        useCdn,
       }),
-    []
+    [apiVersion, dataset, projectId, useCdn]
   );
 
   return client;
