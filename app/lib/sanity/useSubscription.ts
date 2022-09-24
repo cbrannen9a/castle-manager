@@ -185,6 +185,7 @@ export function useSubscriptionToList<T extends { _id: string; _rev: string }>({
 }) {
   const [data, setData] = useState<T[] | null>(initialData);
   const client = useSanityClient();
+
   useEffect(() => {
     const subscription = client
       .listen(query, queryParams, { visibility: "query" })

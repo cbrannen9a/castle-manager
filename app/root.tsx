@@ -13,6 +13,7 @@ import {
 import tailwindStylesheetUrl from "./styles/tailwind.css";
 import { getUser } from "./session.server";
 import { config } from "./lib";
+import { SanityContextProvider } from "./contexts";
 
 export const meta: MetaFunction = () => {
   return { title: "Castle" };
@@ -30,7 +31,9 @@ export async function loader({ request }: LoaderArgs) {
 }
 
 export default function App() {
-  const { config } = useLoaderData<typeof loader>();
+  const {
+    config: { apiVersion, dataset, projectId, useCdn },
+  } = useLoaderData<typeof loader>();
   return (
     <html lang="en" className="h-full">
       <head>
@@ -40,7 +43,14 @@ export default function App() {
         <Links />
       </head>
       <body className="h-full">
-        <Outlet context={config} />
+        <SanityContextProvider
+          apiVersion={apiVersion}
+          dataset={dataset}
+          projectId={projectId}
+          useCdn={useCdn}
+        >
+          <Outlet />
+        </SanityContextProvider>
         <ScrollRestoration />
         <Scripts />
         <LiveReload />
