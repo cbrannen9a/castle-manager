@@ -2,8 +2,8 @@ import type { LoaderArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import invariant from "tiny-invariant";
-import { Game, getGame, getGameQuery } from "~/models/game.server";
-import { PlayerCount, PlayerId } from "~/components";
+import { type Game, getGame, getGameQuery } from "~/models/game.server";
+import { GameDetails } from "~/components";
 import { useSubscription } from "~/lib/sanity";
 import { getProfilesByIds } from "~/models/user.server";
 
@@ -40,17 +40,13 @@ export default function GameDetailsPage() {
   const { _id, title, players, maxPlayers, status } = data;
   return (
     <div>
-      <h3 className="text-2xl font-bold">{title}</h3>
-      <hr className="my-4" />
-      <p>{`${status}`}</p>
-      <PlayerCount current={players?.length} max={maxPlayers} />
-      <ul>
-        {players?.map((player) => (
-          <li key={player}>
-            <PlayerId player={playerData[player]} />
-          </li>
-        ))}
-      </ul>
+      <GameDetails
+        title={title}
+        players={players}
+        maxPlayers={maxPlayers}
+        status={status}
+        playerData={playerData}
+      />
       <Link
         to={`/game/${_id}/${status}`}
         className="rounded bg-blue-500  py-2 px-4 text-white hover:bg-blue-600 focus:bg-blue-400"

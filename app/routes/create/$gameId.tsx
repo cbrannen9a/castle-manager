@@ -8,8 +8,9 @@ import {
   getGameAsHost,
   getGameAsHostQuery,
 } from "~/models/game.server";
-import { PlayerCount } from "~/components";
+import { GameDetails } from "~/components";
 import { useSubscription } from "~/lib/sanity";
+import { getProfilesByIds } from "~/models/user.server";
 
 export async function loader({ request, params }: LoaderArgs) {
   const userId = await requireUserId(request);
@@ -24,7 +25,9 @@ export async function loader({ request, params }: LoaderArgs) {
     _id: params.gameId,
   });
 
-  return json({ game, query, queryParams });
+  const playerData = await getProfilesByIds(game.players);
+
+  return json({ game, query, queryParams, playerData });
 }
 
 export async function action({ request, params }: ActionArgs) {
@@ -37,7 +40,8 @@ export async function action({ request, params }: ActionArgs) {
 }
 
 export default function GameDetailsPage() {
-  const { game, query, queryParams } = useLoaderData<typeof loader>();
+  const { game, query, queryParams, playerData } =
+    useLoaderData<typeof loader>();
   const { data } = useSubscription({
     query,
     queryParams,
@@ -50,15 +54,13 @@ export default function GameDetailsPage() {
   const { _id, title, players, maxPlayers, status } = data;
   return (
     <div>
-      <h3 className="text-2xl font-bold">{title}</h3>
-      <hr className="my-4" />
-      <p>{`${status}`}</p>
-      <PlayerCount current={players?.length} max={maxPlayers} />
-      <ul>
-        {players?.map((player) => (
-          <li key={player}>{player}</li>
-        ))}
-      </ul>
+      <GameDetails
+        title={title}
+        players={players}
+        maxPlayers={maxPlayers}
+        status={status}
+        playerData={playerData}
+      />
       <Link
         to={`/game/${_id}/${status}`}
         className="rounded bg-blue-500  py-2 px-4 text-white hover:bg-blue-600 focus:bg-blue-400"

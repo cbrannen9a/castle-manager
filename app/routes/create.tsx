@@ -1,6 +1,7 @@
 import { json, type LoaderArgs } from "@remix-run/node";
 import { Link, NavLink, Outlet, useLoaderData } from "@remix-run/react";
-import { Header } from "~/components";
+import { Header, StatusBadge } from "~/components";
+import { sortByGameStatus } from "~/helpers";
 import { useSubscriptionToList } from "~/lib/sanity";
 import {
   getGameListItemsAsHost,
@@ -49,7 +50,7 @@ export default function GamesPage() {
             <p className="p-4">No Games yet</p>
           ) : (
             <ol>
-              {data.map((game) => (
+              {data.sort(sortByGameStatus).map((game) => (
                 <li key={game._id}>
                   <NavLink
                     className={({ isActive }) =>
@@ -57,7 +58,7 @@ export default function GamesPage() {
                     }
                     to={game._id}
                   >
-                    📝 {game.title}
+                    🏰 {game.title} <StatusBadge status={game.status} />
                   </NavLink>
                 </li>
               ))}

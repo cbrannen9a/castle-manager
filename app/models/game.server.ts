@@ -11,7 +11,7 @@ export type Game = {
   status: GameStatus;
 };
 
-type GameStatus = "pending" | "inProgress" | "error" | "completed";
+export type GameStatus = "pending" | "inProgress" | "error" | "completed";
 
 function isGame(uncertain: unknown): uncertain is Game {
   return (uncertain as Game)._id !== null;
