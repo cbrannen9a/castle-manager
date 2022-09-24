@@ -1,6 +1,7 @@
 import { json, type LoaderArgs } from "@remix-run/node";
 import { Link, NavLink, Outlet, useLoaderData } from "@remix-run/react";
-import { Header, StatusBadge } from "~/components";
+import { Header, StatusBadge, JoinOrCreate } from "~/components";
+
 import { sortByGameStatus } from "~/helpers";
 import { useSubscriptionToList } from "~/lib/sanity";
 import {
@@ -70,25 +71,6 @@ export default function GamesPage() {
           <Outlet />
         </div>
       </main>
-    </div>
-  );
-}
-
-function JoinOrCreate() {
-  return (
-    <div className="flex w-full items-center justify-around border-b p-4">
-      <Link
-        to="/games"
-        className="rounded bg-blue-500  py-2 px-4 text-white hover:bg-blue-600 focus:bg-blue-400"
-      >
-        Join
-      </Link>
-      <Link
-        to="/create"
-        className="rounded bg-blue-500  py-2 px-4 text-white hover:bg-blue-600 focus:bg-blue-400"
-      >
-        Create
-      </Link>
     </div>
   );
 }

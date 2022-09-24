@@ -5,6 +5,7 @@ import { requireUserId } from "~/session.server";
 import invariant from "tiny-invariant";
 import {
   deleteGame,
+  GameStatus,
   getGameAsHost,
   getGameAsHostQuery,
 } from "~/models/game.server";
@@ -28,6 +29,19 @@ export async function loader({ request, params }: LoaderArgs) {
   const playerData = await getProfilesByIds(game.players);
 
   return json({ game, query, queryParams, playerData });
+}
+
+function statusButtonMessage(status: GameStatus) {
+  switch (status) {
+    case "completed":
+      return "View";
+
+    case "pending":
+      return "Start";
+    case "inProgress":
+    default:
+      return "Join";
+  }
 }
 
 export async function action({ request, params }: ActionArgs) {
@@ -61,17 +75,19 @@ export default function GameDetailsPage() {
         status={status}
         playerData={playerData}
       />
-      <Link
-        to={`/game/${_id}/${status}`}
-        className="rounded bg-blue-500  py-2 px-4 text-white hover:bg-blue-600 focus:bg-blue-400"
-      >
-        Join
-      </Link>
+      {status !== "error" ? (
+        <Link
+          to={`/game/${_id}/${status}`}
+          className="rounded bg-blue-500  py-2 px-4 text-white hover:bg-blue-600 focus:bg-blue-400"
+        >
+          {statusButtonMessage(status)}
+        </Link>
+      ) : null}
 
-      <Form method="post">
+      <Form method="post" className="my-4">
         <button
           type="submit"
-          className="rounded bg-blue-500  py-2 px-4 text-white hover:bg-blue-600 focus:bg-blue-400"
+          className="my-2 rounded bg-blue-500 py-2 px-4 text-white hover:bg-blue-600 focus:bg-blue-400"
         >
           Delete
         </button>

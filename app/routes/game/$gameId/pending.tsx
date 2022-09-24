@@ -24,7 +24,8 @@ export async function loader({ request, params }: LoaderArgs) {
     return redirect(`/game/${game._id}/${game.status}`);
   }
   const { query, queryParams } = getGameQuery({ _id: params.gameId });
-  return json({ game, query, queryParams });
+  const isHost = userId === game.host;
+  return json({ game, query, queryParams, isHost });
 }
 
 export async function action({ request, params }: ActionArgs) {
@@ -45,7 +46,7 @@ export async function action({ request, params }: ActionArgs) {
 }
 
 export default function GameDetailsPage() {
-  const { game, query, queryParams } = useLoaderData<typeof loader>();
+  const { game, query, queryParams, isHost } = useLoaderData<typeof loader>();
 
   const { data } = useSubscription({ query, queryParams, initialData: game });
   if (!data) {
@@ -57,8 +58,9 @@ export default function GameDetailsPage() {
     <div>
       <p>{status}</p>
       <PlayerCount current={players?.length} max={maxPlayers} />
-      <Form method="post">
-        {status === "pending" ? (
+
+      {status === "pending" && isHost ? (
+        <Form method="post">
           <button
             type="submit"
             name="intent"
@@ -67,8 +69,10 @@ export default function GameDetailsPage() {
           >
             Start
           </button>
-        ) : null}
-        {status === "inProgress" ? (
+        </Form>
+      ) : null}
+      {status === "inProgress" ? (
+        <Form method="post">
           <button
             type="submit"
             name="intent"
@@ -77,8 +81,8 @@ export default function GameDetailsPage() {
           >
             Join
           </button>
-        ) : null}
-      </Form>
+        </Form>
+      ) : null}
     </div>
   );
 }

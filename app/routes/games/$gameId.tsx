@@ -2,7 +2,12 @@ import type { LoaderArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import invariant from "tiny-invariant";
-import { type Game, getGame, getGameQuery } from "~/models/game.server";
+import {
+  type Game,
+  getGame,
+  getGameQuery,
+  GameStatus,
+} from "~/models/game.server";
 import { GameDetails } from "~/components";
 import { useSubscription } from "~/lib/sanity";
 import { getProfilesByIds } from "~/models/user.server";
@@ -21,6 +26,18 @@ export async function loader({ request, params }: LoaderArgs) {
   const playerData = await getProfilesByIds(game.players);
 
   return json({ game, query, queryParams, playerData });
+}
+
+function statusButtonMessage(status: GameStatus) {
+  switch (status) {
+    case "completed":
+      return "View";
+
+    case "pending":
+    case "inProgress":
+    default:
+      return "Join";
+  }
 }
 
 export default function GameDetailsPage() {
@@ -47,12 +64,14 @@ export default function GameDetailsPage() {
         status={status}
         playerData={playerData}
       />
-      <Link
-        to={`/game/${_id}/${status}`}
-        className="rounded bg-blue-500  py-2 px-4 text-white hover:bg-blue-600 focus:bg-blue-400"
-      >
-        Join
-      </Link>
+      {status !== "error" ? (
+        <Link
+          to={`/game/${_id}/${status}`}
+          className="rounded bg-blue-500  py-2 px-4 text-white hover:bg-blue-600 focus:bg-blue-400"
+        >
+          {statusButtonMessage(status)}
+        </Link>
+      ) : null}
     </div>
   );
 }
