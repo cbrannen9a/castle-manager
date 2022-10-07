@@ -4,11 +4,11 @@ import { useUser } from "~/utils";
 export default function Header() {
   const user = useUser();
   return (
-    <header className="flex items-center justify-between bg-slate-800 p-4 text-white">
+    <header className="flex w-full items-center justify-between bg-slate-800 p-4 text-white">
       <h1 className="text-3xl font-bold">
         <Link to=".">Games</Link>
       </h1>
-      <p>{user.email}</p>
+      <p className="hidden sm:flex">{user.email}</p>
       <Form action="/logout" method="post">
         <button
           type="submit"
