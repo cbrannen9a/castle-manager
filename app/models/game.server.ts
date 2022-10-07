@@ -51,6 +51,7 @@ export async function createGame({
       _type: "game",
       title,
       host: userId,
+      players: [userId],
       maxPlayers,
       status: "pending",
     });

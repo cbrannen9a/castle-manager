@@ -6,16 +6,18 @@ import {
   type Game,
   getGame,
   getGameQuery,
-  GameStatus,
+  type GameStatus,
 } from "~/models/game.server";
 import { GameDetails } from "~/components";
 import { useSubscription } from "~/lib/sanity";
 import { getProfilesByIds } from "~/models/user.server";
+import { getUserId } from "~/session.server";
 
 export async function loader({ request, params }: LoaderArgs) {
   invariant(params.gameId, "gameId not found");
 
   const game = await getGame({ _id: params.gameId });
+  const userId = await getUserId(request);
   if (!game) {
     return new Response("Not Found");
   }
@@ -25,7 +27,7 @@ export async function loader({ request, params }: LoaderArgs) {
 
   const playerData = await getProfilesByIds(game.players);
 
-  return json({ game, query, queryParams, playerData });
+  return json({ game, query, queryParams, playerData, currentUser: userId });
 }
 
 function statusButtonMessage(status: GameStatus) {
@@ -41,7 +43,7 @@ function statusButtonMessage(status: GameStatus) {
 }
 
 export default function GameDetailsPage() {
-  const { game, query, queryParams, playerData } =
+  const { game, query, queryParams, playerData, currentUser } =
     useLoaderData<typeof loader>();
 
   const { data } = useSubscription<Game>({
@@ -54,7 +56,7 @@ export default function GameDetailsPage() {
     return <>No Game</>;
   }
 
-  const { _id, title, players, maxPlayers, status } = data;
+  const { _id, title, players, maxPlayers, status, host } = data;
   return (
     <div>
       <GameDetails
@@ -63,6 +65,8 @@ export default function GameDetailsPage() {
         maxPlayers={maxPlayers}
         status={status}
         playerData={playerData}
+        host={host}
+        currentUser={currentUser}
       />
       {status !== "error" ? (
         <Link

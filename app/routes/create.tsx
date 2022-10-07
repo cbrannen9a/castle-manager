@@ -1,6 +1,13 @@
 import { json, type LoaderArgs } from "@remix-run/node";
-import { Link, NavLink, Outlet, useLoaderData } from "@remix-run/react";
-import { Header, StatusBadge, JoinOrCreate } from "~/components";
+import {
+  Link,
+  NavLink,
+  Outlet,
+  useLoaderData,
+  useLocation,
+  useParams,
+} from "@remix-run/react";
+import { Header, StatusBadge, JoinOrCreate, GamesList } from "~/components";
 
 import { sortByGameStatus } from "~/helpers";
 import { useSubscriptionToList } from "~/lib/sanity";
@@ -31,43 +38,76 @@ export default function GamesPage() {
     initialData: gameListItems,
   });
 
+  const { gameId } = useParams();
+  const { pathname } = useLocation();
+
   return (
     <div className="flex h-full min-h-screen flex-col">
       <Header />
       <JoinOrCreate />
       <main className="flex h-full bg-white">
-        <div className="h-full w-80 border-r bg-gray-50">
-          <h2 className="block bg-slate-400 p-4 text-xl text-white">
-            Hosted Games
-          </h2>
-          <hr />
-          <Link to="new" className="block p-4 text-xl text-blue-500">
-            + New Game
+        <div className="w-full border-r bg-gray-50 sm:h-full sm:w-80">
+          <Link to={"."}>
+            <h2 className="flex flex-row p-4 text-2xl text-gray-600">
+              Hosted Games
+              {gameId ? (
+                <>
+                  <svg
+                    className="h-8 w-8 rotate-90 text-gray-600"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                      clipRule="evenodd"
+                    ></path>
+                  </svg>
+                </>
+              ) : null}
+            </h2>
           </Link>
-
           <hr />
+          <div className="sm:hidden">
+            {!gameId ? (
+              <>
+                <Link to="new" className="block p-4 text-xl text-blue-500">
+                  + New Game
+                </Link>
+                <hr />
+              </>
+            ) : null}
+          </div>
+          <div className="hidden sm:flex">
+            {
+              <>
+                <Link to="new" className="block p-4 text-xl text-blue-500">
+                  + New Game
+                </Link>
+                <hr />
+              </>
+            }
+          </div>
 
           {!data || data?.length === 0 ? (
             <p className="p-4">No Games yet</p>
           ) : (
-            <ol>
-              {data.sort(sortByGameStatus).map((game) => (
-                <li key={game._id}>
-                  <NavLink
-                    className={({ isActive }) =>
-                      `block border-b p-4 text-xl ${isActive ? "bg-white" : ""}`
-                    }
-                    to={game._id}
-                  >
-                    🏰 {game.title} <StatusBadge status={game.status} />
-                  </NavLink>
-                </li>
-              ))}
-            </ol>
+            <>
+              <div className="sm:hidden">
+                {!gameId && pathname !== "/create/new" ? (
+                  <GamesList games={data} />
+                ) : null}
+                <div className="m-4">
+                  <Outlet />
+                </div>
+              </div>
+              <div className="hidden sm:flex">{<GamesList games={data} />}</div>
+            </>
           )}
         </div>
 
-        <div className="flex-1 p-6">
+        <div className="hidden flex-1 p-6 sm:flex">
           <Outlet />
         </div>
       </main>

@@ -5,7 +5,7 @@ import { requireUserId } from "~/session.server";
 import invariant from "tiny-invariant";
 import {
   deleteGame,
-  GameStatus,
+  type GameStatus,
   getGameAsHost,
   getGameAsHostQuery,
 } from "~/models/game.server";
@@ -28,7 +28,7 @@ export async function loader({ request, params }: LoaderArgs) {
 
   const playerData = await getProfilesByIds(game.players);
 
-  return json({ game, query, queryParams, playerData });
+  return json({ game, query, queryParams, playerData, currentUser: userId });
 }
 
 function statusButtonMessage(status: GameStatus) {
@@ -50,11 +50,11 @@ export async function action({ request, params }: ActionArgs) {
 
   await deleteGame({ userId, _id: params.gameId });
 
-  return redirect("/games");
+  return redirect("/create");
 }
 
 export default function GameDetailsPage() {
-  const { game, query, queryParams, playerData } =
+  const { game, query, queryParams, playerData, currentUser } =
     useLoaderData<typeof loader>();
   const { data } = useSubscription({
     query,
@@ -65,7 +65,7 @@ export default function GameDetailsPage() {
   if (!data) {
     return <div>No game</div>;
   }
-  const { _id, title, players, maxPlayers, status } = data;
+  const { _id, title, players, maxPlayers, status, host } = data;
   return (
     <div>
       <GameDetails
@@ -74,6 +74,8 @@ export default function GameDetailsPage() {
         maxPlayers={maxPlayers}
         status={status}
         playerData={playerData}
+        host={host}
+        currentUser={currentUser}
       />
       {status !== "error" ? (
         <Link
