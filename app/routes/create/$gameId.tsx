@@ -67,7 +67,7 @@ export default function GameDetailsPage() {
   }
   const { _id, title, players, maxPlayers, status, host } = data;
   return (
-    <div>
+    <div className="w-full">
       <GameDetails
         title={title}
         players={players}
