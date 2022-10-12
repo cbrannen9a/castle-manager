@@ -26,12 +26,14 @@ export default function GameDetails({
       <h4 className="text-lg font-semibold">Players</h4>
       <hr className="my-2" />
       <ul className="mb-4 max-w-md list-inside space-y-1 divide-y divide-gray-200">
-        {players?.map((player) => (
+        {players?.map((player, idx) => (
           <li key={player} className="py-3 sm:py-4">
             <PlayerId
               player={playerData?.[player]}
               isHost={player === host}
               isCurrentUser={player === currentUser}
+              isCurrentUserHost={currentUser === host}
+              userIndex={idx}
             />
           </li>
         ))}

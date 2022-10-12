@@ -168,3 +168,19 @@ export async function joinGameAsPlayer({
     return null;
   }
 }
+
+export async function removePlayer({
+  _id,
+  userIndex,
+}: Pick<Game, "_id"> & { userIndex: string }) {
+  try {
+    await client
+      .patch(_id)
+      .unset([`players[${userIndex}]`])
+      .commit();
+
+    return {};
+  } catch (error) {
+    return null;
+  }
+}

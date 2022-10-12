@@ -4,12 +4,13 @@ import {
   redirect,
   type ActionArgs,
 } from "@remix-run/node";
-import { Form, useLoaderData } from "@remix-run/react";
+import { Form, useLoaderData, useLocation } from "@remix-run/react";
 
 import invariant from "tiny-invariant";
-import { PlayerCount } from "~/components";
+import { GameDetails, PlayerCount, StatusBadge } from "~/components";
 import { useSubscription } from "~/lib/sanity";
 import { getGame, getGameQuery, startGame } from "~/models/game.server";
+import { getProfilesByIds } from "~/models/user.server";
 import { requireUserId } from "~/session.server";
 
 export async function loader({ request, params }: LoaderArgs) {
@@ -25,7 +26,15 @@ export async function loader({ request, params }: LoaderArgs) {
   }
   const { query, queryParams } = getGameQuery({ _id: params.gameId });
   const isHost = userId === game.host;
-  return json({ game, query, queryParams, isHost });
+  const playerData = await getProfilesByIds(game.players);
+  return json({
+    game,
+    query,
+    queryParams,
+    isHost,
+    currentUser: userId,
+    playerData,
+  });
 }
 
 export async function action({ request, params }: ActionArgs) {
@@ -46,18 +55,37 @@ export async function action({ request, params }: ActionArgs) {
 }
 
 export default function GameDetailsPage() {
-  const { game, query, queryParams, isHost } = useLoaderData<typeof loader>();
-
+  const { game, query, queryParams, isHost, currentUser, playerData } =
+    useLoaderData<typeof loader>();
+  const location = useLocation();
+  console.log(location);
   const { data } = useSubscription({ query, queryParams, initialData: game });
   if (!data) {
     return <div>No game found</div>;
   }
-
-  const { status, maxPlayers, players } = data;
+  const { title, host, status, maxPlayers, players } = data;
+  //redirect to status?
   return (
     <div>
-      <p>{status}</p>
-      <PlayerCount current={players?.length} max={maxPlayers} />
+      {isHost ? (
+        <>
+          <GameDetails
+            title={title}
+            players={players}
+            maxPlayers={maxPlayers}
+            status={status}
+            playerData={playerData}
+            host={host}
+            currentUser={currentUser}
+          />
+          <p></p>
+        </>
+      ) : (
+        <>
+          <StatusBadge status={status} />
+          <PlayerCount current={players?.length} max={maxPlayers} />
+        </>
+      )}
 
       {status === "pending" && isHost ? (
         <Form method="post">
@@ -70,7 +98,9 @@ export default function GameDetailsPage() {
             Start
           </button>
         </Form>
-      ) : null}
+      ) : (
+        <p>Waiting for Host to Start...</p>
+      )}
       {status === "inProgress" ? (
         <Form method="post">
           <button
