@@ -8,6 +8,7 @@ import {
   type GameStatus,
   getGameAsHost,
   getGameAsHostQuery,
+  removePlayer,
 } from "~/models/game.server";
 import { GameDetails } from "~/components";
 import { useSubscription } from "~/lib/sanity";
@@ -37,7 +38,8 @@ function statusButtonMessage(status: GameStatus) {
       return "View";
 
     case "pending":
-      return "Start";
+      return "Setup";
+
     case "inProgress":
     default:
       return "Join";
@@ -45,12 +47,23 @@ function statusButtonMessage(status: GameStatus) {
 }
 
 export async function action({ request, params }: ActionArgs) {
-  const userId = await requireUserId(request);
   invariant(params.gameId, "gameId not found");
 
-  await deleteGame({ userId, _id: params.gameId });
+  const userId = await requireUserId(request);
+  const formData = await request.formData();
+  const intent = formData.get("intent");
 
-  return redirect("/create");
+  if (intent === "delete") {
+    await deleteGame({ userId, _id: params.gameId });
+
+    return redirect("/create");
+  }
+  if (intent?.toString().includes("removePlayer")) {
+    const removeUserIndex = intent.toString().split(" ")[1];
+    await removePlayer({ userIndex: removeUserIndex, _id: params.gameId });
+    return {};
+  }
+  return null;
 }
 
 export default function GameDetailsPage() {
@@ -67,16 +80,18 @@ export default function GameDetailsPage() {
   }
   const { _id, title, players, maxPlayers, status, host } = data;
   return (
-    <div>
-      <GameDetails
-        title={title}
-        players={players}
-        maxPlayers={maxPlayers}
-        status={status}
-        playerData={playerData}
-        host={host}
-        currentUser={currentUser}
-      />
+    <div className="w-full">
+      <Form method="post">
+        <GameDetails
+          title={title}
+          players={players}
+          maxPlayers={maxPlayers}
+          status={status}
+          playerData={playerData}
+          host={host}
+          currentUser={currentUser}
+        />
+      </Form>
       {status !== "error" ? (
         <Link
           to={`/game/${_id}/${status}`}
@@ -89,6 +104,8 @@ export default function GameDetailsPage() {
       <Form method="post" className="my-4">
         <button
           type="submit"
+          name="intent"
+          value="delete"
           className="my-2 rounded bg-blue-500 py-2 px-4 text-white hover:bg-blue-600 focus:bg-blue-400"
         >
           Delete

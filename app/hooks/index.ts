@@ -1,0 +1,1 @@
+export { useParentData } from "./useParentData";

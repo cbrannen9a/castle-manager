@@ -53,7 +53,7 @@ export default function GamesPage() {
               {gameId ? (
                 <>
                   <svg
-                    className="h-8 w-8 rotate-90 text-gray-600"
+                    className="mt-1 h-8 w-8 rotate-90 text-gray-600"
                     fill="currentColor"
                     viewBox="0 0 20 20"
                     xmlns="http://www.w3.org/2000/svg"

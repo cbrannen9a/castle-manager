@@ -12,8 +12,9 @@ import {
 
 import tailwindStylesheetUrl from "./styles/tailwind.css";
 import { getUser } from "./session.server";
-import { config } from "./lib";
-import { SanityContextProvider } from "./contexts";
+import { getSanityConfig } from "./lib";
+import { getSite } from "./models/site.server";
+import { getEnv } from "./env.server";
 
 export const meta: MetaFunction = () => {
   return { title: "Castle" };
@@ -24,16 +25,23 @@ export const links: LinksFunction = () => {
 };
 
 export async function loader({ request }: LoaderArgs) {
+  const ENV = getEnv();
+  const sanityConfig = getSanityConfig({
+    dataset: ENV.SANITY_DATASET,
+    projectId: ENV.SANITY_PROJECT_ID,
+    nodeEnv: ENV.NODE_ENV,
+  });
+
   return json({
     user: await getUser(request),
-    config: { ...config, token: null },
+    sanityConfig,
+    site: await getSite(),
+    ENV,
   });
 }
 
 export default function App() {
-  const {
-    config: { apiVersion, dataset, projectId, useCdn },
-  } = useLoaderData<typeof loader>();
+  const { ENV } = useLoaderData<typeof loader>();
   return (
     <html lang="en" className="h-screen w-screen">
       <head>
@@ -43,16 +51,14 @@ export default function App() {
         <Links />
       </head>
       <body className="h-full w-full">
-        <SanityContextProvider
-          apiVersion={apiVersion}
-          dataset={dataset}
-          projectId={projectId}
-          useCdn={useCdn}
-        >
-          <Outlet />
-        </SanityContextProvider>
+        <Outlet />
         <ScrollRestoration />
         <Scripts />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.ENV = ${JSON.stringify(ENV)}`,
+          }}
+        />
         <LiveReload />
       </body>
     </html>

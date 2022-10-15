@@ -1,1 +1,1 @@
-export { client, config } from "./sanity";
+export { client, getSanityConfig } from "./sanity";
