@@ -5,3 +5,4 @@ export { Badge, StatusBadge } from "./Badge";
 export { default as GameDetails } from "./GameDetails";
 export { default as GamesList } from "./GamesList";
 export { default as JoinOrCreate } from "./JoinOrCreate";
+export { default as Share } from "./Share";

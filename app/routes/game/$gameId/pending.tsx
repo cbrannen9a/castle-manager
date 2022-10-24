@@ -7,7 +7,7 @@ import {
 import { Form, useLoaderData, useLocation } from "@remix-run/react";
 
 import invariant from "tiny-invariant";
-import { GameDetails, PlayerCount, StatusBadge } from "~/components";
+import { GameDetails, PlayerCount, Share, StatusBadge } from "~/components";
 import { useSubscription } from "~/lib/sanity";
 import { getGame, getGameQuery, startGame } from "~/models/game.server";
 import { getProfilesByIds } from "~/models/user.server";
@@ -57,13 +57,12 @@ export async function action({ request, params }: ActionArgs) {
 export default function GameDetailsPage() {
   const { game, query, queryParams, isHost, currentUser, playerData } =
     useLoaderData<typeof loader>();
-  const location = useLocation();
-  console.log(location);
+
   const { data } = useSubscription({ query, queryParams, initialData: game });
   if (!data) {
     return <div>No game found</div>;
   }
-  const { title, host, status, maxPlayers, players } = data;
+  const { title, host, status, maxPlayers, players, _id } = data;
   //redirect to status?
   return (
     <div>
@@ -78,7 +77,14 @@ export default function GameDetailsPage() {
             host={host}
             currentUser={currentUser}
           />
-          <p></p>
+          <Share
+            shareData={{
+              title: `Join my game ${title}`,
+              url: `https://castle-manager.netlify.app/invite/${_id}`,
+              text: "Join my game",
+            }}
+            text="Invite"
+          />
         </>
       ) : (
         <>
